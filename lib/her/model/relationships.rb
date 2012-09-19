@@ -54,7 +54,7 @@ module Her
         klass.class_eval do
           define_method("organization")  do
             ## add Organization.find(organization_id) to Channel instance
-            klass.find(self.send("#{sklass.name.downcase}_id"))
+            sklass.find(self.send("#{sklass.name.downcase}_id"))
           end
         end
       end
