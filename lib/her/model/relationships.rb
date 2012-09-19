@@ -42,7 +42,6 @@ module Her
       # add finders on both the has_many and the belongs to for 
       # associated models 
       def has_many_ar(name, attrs={})
-        puts attrs
         klass = Object.const_get(name.to_s.classify)
         sklass = self
 
