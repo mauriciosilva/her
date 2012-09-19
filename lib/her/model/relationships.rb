@@ -36,6 +36,36 @@ module Her
         data
       end # }}}
 
+      ## 
+      # has_many_ar to handle active_record associations
+      # 
+      # add finders on both the has_many and the belongs to for 
+      # associated models 
+      def has_many_ar(name, attrs={})
+        puts attrs
+        klass = Object.const_get(name.to_s.classify)
+        sklass = self
+
+        define_method(name.to_s) do
+          ## add Channel.find_by_organization_id(self.id) to Organization instance
+          klass.send("find_by_#{sklass.name.downcase}_id",id)
+        end
+
+        klass.class_eval do
+          define_method("organization")  do
+            ## add Organization.find(organization_id) to Channel instance
+            klass.find(self.send("#{sklass.name.downcase}_id"))
+          end
+        end
+      end
+
+      ## 
+      # has_many_ar to handle active_record associations
+      # 
+      # add finders on both the has_many and the belongs to for 
+      # associated models 
+
+
       # Define an *has_many* relationship.
       #
       # @param [Symbol] name The name of the model
