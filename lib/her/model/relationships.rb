@@ -2,6 +2,17 @@ module Her
   module Model
     # This module adds relationships to models
     module Relationships
+
+      def append_relationships(name, attrs={})
+        attrs = {
+          :class_name => name.to_s.classify,
+          :name => name,
+          :path => "/#{name}"
+        }.merge(attrs)
+        (relationships[:has_many_ar] ||= []) << attrs
+      end
+
+
       # Return @her_relationships, lazily initialized with copy of the
       # superclass' her_relationships, or an empty hash.
       # @private
@@ -42,18 +53,36 @@ module Her
       # add finders on both the has_many and the belongs to for 
       # associated models 
       def has_many_ar(name, attrs={})
-        klass = Object.const_get(name.to_s.classify)
+
+        append_relationships(name, attrs)
+
+        klass = self.nearby_class(name.to_s.classify)
         sklass = self
 
         define_method(name.to_s) do
           ## add Channel.find_by_organization_id(self.id) to Organization instance
-          klass.send("find_by_#{sklass.name.downcase}_id",id)
+          unless attrs[:as]
+            klass.send("find_by_#{sklass.name.downcase}_id",id) 
+          else
+          
+            as = attrs[:as]
+            method = :where # attrs[:via][:method]
+            id_field = "#{as}_id".to_sym # attrs[:via][:id]
+            owner = "#{as}_type".to_sym # attrs[:via].key(self.class.name)
+
+            klass.send(method, {id_field => id, owner => self.class.name})
+          end
+            
         end
 
         klass.class_eval do
-          define_method("organization")  do
+          define_method(sklass.name.downcase)  do
             ## add Organization.find(organization_id) to Channel instance
-            sklass.find(self.send("#{sklass.name.downcase}_id"))
+            unless attrs[:as]
+              sklass.find(self.send("#{sklass.name.downcase}_id"))
+            else
+              sklass.find(self.send("#{attrs[:as]}_id"))
+            end
           end
         end
       end
