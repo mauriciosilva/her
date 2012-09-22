@@ -7,7 +7,7 @@ module Her
         attrs = {
           :class_name => name.to_s.classify,
           :name => name,
-          :path => "/#{name}"
+          #:path => "/#{name}"
         }.merge(attrs)
         (relationships[:has_many_ar] ||= []) << attrs
       end
@@ -126,6 +126,36 @@ module Her
         end
       end # }}}
 
+      def has_one_ar(name, attrs={})
+        append_relationships(name, attrs)
+
+        klass = self.nearby_class(name.to_s.classify)
+        sklass = self
+
+        define_method(name.to_s) do
+          ## add Channel.find_by_organization_id(self.id) to Organization instance
+          unless attrs[:as]
+            klass.send("find_by_#{sklass.name.downcase}_id",id) 
+          else
+            as = attrs[:as]
+            method = :where # attrs[:via][:method]
+            id_field = "#{as}_id".to_sym # attrs[:via][:id]
+            owner = "#{as}_type".to_sym # attrs[:via].key(self.class.name)
+
+            klass.send(method, {id_field => id, owner => self.class.name})
+          end
+        end
+        klass.class_eval do
+          define_method(sklass.name.downcase)  do
+            ## add Organization.find(organization_id) to Channel instance
+            unless attrs[:as]
+              sklass.find(self.send("#{sklass.name.downcase}_id"))
+            else
+              sklass.find(self.send("#{attrs[:as]}_id"))
+            end
+          end
+        end
+      end
       # Define an *has_one* relationship.
       #
       # @param [Symbol] name The name of the model
@@ -157,6 +187,42 @@ module Her
           @data[name] ||= klass.get_resource("#{self.class.build_request_path(:id => id)}#{attrs[:path]}")
         end
       end # }}}
+
+      def belongs_to_ar(name, attrs={})
+
+        append_relationships(name, attrs)
+
+        klass = self.nearby_class(name.to_s.classify)
+        sklass = self
+
+        define_method(name.to_s.pluralize) do
+          binding.pry
+          ## add Channel.find_by_organization_id(self.id) to Organization instance
+          unless attrs[:as]
+            klass.send("find_by_#{sklass.name.downcase}_id",id) 
+          else
+          
+            as = attrs[:as]
+            method = :where # attrs[:via][:method]
+            id_field = "#{as}_id".to_sym # attrs[:via][:id]
+            owner = "#{as}_type".to_sym # attrs[:via].key(self.class.name)
+
+            klass.send(method, {id_field => id, owner => self.class.name})
+          end
+            
+        end
+
+        klass.class_eval do
+          define_method(sklass.name.downcase)  do
+            ## add Organization.find(organization_id) to Channel instance
+            unless attrs[:as]
+              sklass.find(self.send("#{sklass.name.downcase}_id"))
+            else
+              sklass.find(self.send("#{attrs[:as]}_id"))
+            end
+          end
+        end
+      end
 
       # Define a *belongs_to* relationship.
       #
