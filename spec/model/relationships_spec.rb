@@ -7,38 +7,44 @@ describe Her::Model::Relationships do
       spawn_model "Foo::User"
     end # }}}
 
-    it "handles a single 'has_many' relationship" do # {{{
-      Foo::User.has_many :comments
-      Foo::User.relationships[:has_many].should == [{ :name => :comments, :class_name => "Comment", :path => "/comments" }]
-    end # }}}
+    context 'has_many' do
+      it 'handles a single relationship' do # {{{
+        Foo::User.has_many :comments
+        Foo::User.relationships[:has_many].should == [{ :name => :comments, :class_name => "Comment", :path => "/comments" }]
+      end # }}}
 
-    it "handles multiples 'has_many' relationship" do # {{{
-      Foo::User.has_many :comments
-      Foo::User.has_many :posts
-      Foo::User.relationships[:has_many].should == [{ :name => :comments, :class_name => "Comment", :path => "/comments" }, { :name => :posts, :class_name => "Post", :path => "/posts" }]
-    end # }}}
+      it 'handles multiple relationships' do # {{{
+        Foo::User.has_many :comments
+        Foo::User.has_many :posts
+        Foo::User.relationships[:has_many].should == [{ :name => :comments, :class_name => "Comment", :path => "/comments" }, { :name => :posts, :class_name => "Post", :path => "/posts" }]
+      end # }}}
+    end
 
-    it "handles a single 'has_one' relationship" do # {{{
-      Foo::User.has_one :category
-      Foo::User.relationships[:has_one].should == [{ :name => :category, :class_name => "Category", :path => "/category" }]
-    end # }}}
+    context 'has_one' do
+      it 'handles a single relationship' do # {{{
+        Foo::User.has_one :category
+        Foo::User.relationships[:has_one].should == [{ :name => :category, :class_name => "Category", :path => "/category" }]
+      end # }}}
 
-    it "handles multiples 'has_one' relationship" do # {{{
-      Foo::User.has_one :category
-      Foo::User.has_one :role
-      Foo::User.relationships[:has_one].should == [{ :name => :category, :class_name => "Category", :path => "/category" }, { :name => :role, :class_name => "Role", :path => "/role" }]
-    end # }}}
+      it 'handles multiple relationships' do # {{{
+        Foo::User.has_one :category
+        Foo::User.has_one :role
+        Foo::User.relationships[:has_one].should == [{ :name => :category, :class_name => "Category", :path => "/category" }, { :name => :role, :class_name => "Role", :path => "/role" }]
+      end # }}}
+    end
 
-    it "handles a single belongs_to relationship" do # {{{
-      Foo::User.belongs_to :organization
-      Foo::User.relationships[:belongs_to].should == [{ :name => :organization, :class_name => "Organization", :foreign_key => "organization_id", :path => "/organizations/:id" }]
-    end # }}}
+    context 'belongs_to' do
+      it 'handles a single relationship' do # {{{
+        Foo::User.belongs_to :organization
+        Foo::User.relationships[:belongs_to].should == [{ :name => :organization, :class_name => "Organization", :foreign_key => "organization_id", :path => "/organizations/:id" }]
+      end # }}}
 
-    it "handles multiples 'belongs_to' relationship" do # {{{
-      Foo::User.belongs_to :organization
-      Foo::User.belongs_to :family
-      Foo::User.relationships[:belongs_to].should == [{ :name => :organization, :class_name => "Organization", :foreign_key => "organization_id", :path => "/organizations/:id" }, { :name => :family, :class_name => "Family", :foreign_key => "family_id", :path => "/families/:id" }]
-    end # }}}
+      it 'handles multiple relationships' do # {{{
+        Foo::User.belongs_to :organization
+        Foo::User.belongs_to :family
+        Foo::User.relationships[:belongs_to].should == [{ :name => :organization, :class_name => "Organization", :foreign_key => "organization_id", :path => "/organizations/:id" }, { :name => :family, :class_name => "Family", :foreign_key => "family_id", :path => "/families/:id" }]
+      end # }}}
+    end
   end
 
   context "setting relationships with details" do
