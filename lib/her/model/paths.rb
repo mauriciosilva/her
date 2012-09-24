@@ -49,6 +49,16 @@ module Her
           @her_resource_path = path
         end # }}}
 
+
+        def build_querystring_request_path(path=nil, parameters={})
+          ## append paramters here...
+          params = []
+          parameters.each do |k,v|
+            params << "#{k.to_s}=#{v}"
+          end
+          "#{collection_path}?#{params.join("&")}" 
+        end
+
         # Return a custom path based on the collection path and variable parameters
         #
         # @example
@@ -66,8 +76,11 @@ module Her
 
           path.gsub(/:([\w_]+)/) do
             # Look for :key or :_key, otherwise raise an exception
-            parameters.delete($1.to_sym) || parameters.delete("_#{$1}".to_sym) || raise(Her::Errors::PathError.new("Missing :_#{$1} parameter to build the request path (#{path})."))
+            parameters.delete($1.to_sym) || 
+              parameters.delete("_#{$1}".to_sym) || 
+              raise(Her::Errors::PathError.new("Missing :_#{$1} parameter to build the request path (#{path})."))
           end
+
         end # }}}
       end
     end

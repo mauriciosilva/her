@@ -1,4 +1,5 @@
 # encoding: utf-8
+require 'pry'
 require File.join(File.dirname(__FILE__), "../spec_helper.rb")
 
 describe Her::Model::Paths do
@@ -9,6 +10,7 @@ describe Her::Model::Paths do
       end # }}}
 
       describe "#build_request_path" do
+=begin
         it "builds paths with defaults" do # {{{
           Foo::User.build_request_path(:id => "foo").should == "users/foo"
           Foo::User.build_request_path.should == "users"
@@ -25,14 +27,22 @@ describe Her::Model::Paths do
           Foo::User.build_request_path(:id => "foo").should == "utilisateurs/foo"
           Foo::User.build_request_path.should == "utilisateurs"
         end # }}}
+=end
+
+       it "builds a path with querystring parameters from a resource" do 
+          params = {:fb_app_config_id => 1, :blah => "foo"}
+          Foo::User.build_querystring_request_path(nil,params).should == "users?fb_app_config_id=1&blah=foo"
+        end
 
         it "builds paths with custom collection path with multiple variables" do # {{{
           Foo::User.collection_path "/organizations/:organization_id/utilisateurs"
 
           Foo::User.build_request_path(:id => "foo", :_organization_id => "acme").should == "/organizations/acme/utilisateurs/foo"
+
           Foo::User.build_request_path(:_organization_id => "acme").should == "/organizations/acme/utilisateurs"
 
           Foo::User.build_request_path(:id => "foo", :organization_id => "acme").should == "/organizations/acme/utilisateurs/foo"
+
           Foo::User.build_request_path(:organization_id => "acme").should == "/organizations/acme/utilisateurs"
         end # }}}
 

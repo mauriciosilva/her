@@ -192,36 +192,42 @@ module Her
 
         append_relationships(name, attrs)
 
-        klass = self.nearby_class(name.to_s.classify)
-        sklass = self
+        right_klass = self.nearby_class(name.to_s.classify)
+        left_klass = self
 
-        define_method(name.to_s.pluralize) do
-          binding.pry
-          ## add Channel.find_by_organization_id(self.id) to Organization instance
+        define_method(name.to_s) do
+          
           unless attrs[:as]
-            klass.send("find_by_#{sklass.name.downcase}_id",id) 
+            right_klass.find(self.send("#{right_klass.name.underscore}_id"))
           else
           
             as = attrs[:as]
-            method = :where # attrs[:via][:method]
-            id_field = "#{as}_id".to_sym # attrs[:via][:id]
-            owner = "#{as}_type".to_sym # attrs[:via].key(self.class.name)
+            method = :where 
+            id_field = "#{as}_id".to_sym 
+            owner = "#{as}_type".to_sym 
 
-            klass.send(method, {id_field => id, owner => self.class.name})
+            right_klass.send(method, {id_field => id, owner => self.class.name})
           end
             
         end
 
-        klass.class_eval do
-          define_method(sklass.name.downcase)  do
-            ## add Organization.find(organization_id) to Channel instance
-            unless attrs[:as]
-              sklass.find(self.send("#{sklass.name.downcase}_id"))
-            else
-              sklass.find(self.send("#{attrs[:as]}_id"))
-            end
+        right_klass.class_eval do 
+          define_method("organizations") do 
+            ## need to write path here
+            left_klass.get_collection("#{left_klass.build_querystring_request_path(left_klass.collection_path,{:fb_app_config_id => id})}")
           end
         end
+        
+        #klass.class_eval do
+          #define_method(sklass.name.downcase.pluralize)  do
+            ### add Organization.find(organization_id) to Channel instance
+            #unless attrs[:as]
+              #klass.find(self.send("#{sklass.name.downcase}_id"))
+            #else
+              #klass.find(self.send("#{attrs[:as]}_id"))
+            #end
+          #end
+        #end
       end
 
       # Define a *belongs_to* relationship.
