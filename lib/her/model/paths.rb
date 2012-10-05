@@ -49,6 +49,15 @@ module Her
           @her_resource_path = path
         end # }}}
 
+        def build_querystring_request_path(path=nil, parameters={})
+          ## append paramters here...
+          params = []
+          parameters.each do |k,v|
+            params << "#{k.to_s}=#{v}"
+          end
+          "#{collection_path}?#{params.join("&")}"
+        end
+
         # Return a custom path based on the collection path and variable parameters
         #
         # @example
