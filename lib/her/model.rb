@@ -5,6 +5,7 @@ require "her/model/relationships"
 require "her/model/hooks"
 require "her/model/introspection"
 require "her/model/paths"
+require "her/model/booz"
 
 module Her
   # This module is the main element of Her. After creating a Her::API object,
@@ -30,6 +31,7 @@ module Her
       extend Her::Model::Base
       extend Her::Model::HTTP
       extend Her::Model::Relationships
+      extend Her::Model::Remote
       extend Her::Model::Hooks
 
       # Define default settings
