@@ -22,12 +22,12 @@ module Her
       end # }}}
 
       # Initialize a collection of resources
-      # @private
-      def self.initialize_collection(klass, parsed_data={}) # {{{
-        collection_data = parsed_data[:data].map { |item_data| klass.new(item_data) }
+      def self.initialize_collection(klass, parsed_data={})
+        root_node = klass.name.underscore.pluralize.to_sym        
+        puts "using #{root_node} as the root_node"
+        collection_data = parsed_data[:data][root_node].map { |item_data| klass.new(item_data) }
         Her::Collection.new(collection_data, parsed_data[:metadata], parsed_data[:errors])
-      end # }}}
-
+      end
       # Handles missing methods by routing them through @data
       # @private
       def method_missing(method, *args, &blk) # {{{

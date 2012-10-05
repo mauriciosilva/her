@@ -30,4 +30,5 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency "activesupport"
   s.add_runtime_dependency "faraday", "~> 0.8"
   s.add_runtime_dependency "multi_json", "~> 1.3"
+  s.add_runtime_dependency "faraday_middleware"
 end
