@@ -2,6 +2,7 @@ $:.unshift File.join(File.dirname(__FILE__), *%w[.. lib])
 
 require "rspec"
 require "mocha_standalone"
+require "active_record"
 require "her"
 
 RSpec.configure do |c|
@@ -24,6 +25,13 @@ end
 
 class Array
   def to_json; MultiJson.dump(self); end
+end
+
+def spawn_active_record_model(klass, &block)
+  Object.instance_eval { remove_const klass } if Object.const_defined?(klass)
+  Object.const_set(klass, Class.new(ActiveRecord::Base))
+  Object.const_get(klass).class_eval(&block) if block_given?
+  @globals << klass.to_sym
 end
 
 def spawn_model(klass, &block)

@@ -1,6 +1,22 @@
 module Her
   module Model
     module Remote
+=begin
+      def belongs_to_active_record(klass, attrs={})
+        belongs_to_class    = klass.classify.constantize
+        has_many_class      = self
+
+        define_method("#{belongs_to_class.name.underscore}") do 
+            belongs_to_class.send(:find, self.send("#{belongs_to_class.name.foreign_key}"))
+        end
+
+        belongs_to_class.class_eval do 
+          define_method("#{has_many_class.name.tabelize}") do 
+            has_many_class.get_collection("#{has_many_class.build_querystring_request_path(has_many_class.collection_path,{"#{belongs_to_class.name.foreign_key}".to_sym => id})}")
+          end
+        end
+      end
+=end
       def belongs_to_active_record(klass, attrs={})
         belongs_to_class    = self.nearby_class(klass.to_s.classify)
         has_many_class      = self

@@ -55,6 +55,7 @@ module Her
       #   @user.articles # => [#<Article(articles/2) id=2 title="Hello world.">]
       #   # Fetched via GET "/users/1/articles"
       def has_many(name, attrs={}) # {{{
+        binding.pry
         attrs = {
           :class_name => name.to_s.classify,
           :name => name,
