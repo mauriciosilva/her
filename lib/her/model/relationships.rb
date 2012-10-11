@@ -55,23 +55,56 @@ module Her
       #   @user.articles # => [#<Article(articles/2) id=2 title="Hello world.">]
       #   # Fetched via GET "/users/1/articles"
       def has_many(name, attrs={}) # {{{
-        binding.pry
         attrs = {
           :class_name => name.to_s.classify,
           :name => name,
           :path => "/#{name}"
         }.merge(attrs)
-        (relationships[:has_many] ||= []) << attrs
 
-        define_method(name) do |*method_attrs|
-          method_attrs = method_attrs[0] || {}
-          klass = self.class.nearby_class(attrs[:class_name])
-          if method_attrs.any?
-            klass.get_collection("#{self.class.build_request_path(method_attrs.merge(:id => id))}#{attrs[:path]}")
-          else
-            @data[name] ||= klass.get_collection("#{self.class.build_request_path(:id => id)}#{attrs[:path]}")
+        (relationships[:has_many] ||= []) << attrs
+        
+        if attrs.has_key? :active_record 
+          attrs = {
+           
+          }.merge!(attrs)
+
+          active_record_finder attrs
+        else
+          has_many_finder attrs
+        end
+
+      end
+
+      def active_record_finder(attrs={})
+        ## TODO: refactor vars
+        parent = self
+        child  = self.nearby_class(attrs[:class_name])
+        ##  find has_manies by belongs_to id
+        define_method("#{child.name.pluralize.underscore}") do 
+          child.send(:where, {"#{parent.name.foreign_key}" => id})
+        end
+        ##  find belongs_to by a has_many
+        child.class_eval do 
+          puts "creating method #{parent.name.tableize}"
+          define_method("#{parent.name.singularize.underscore}") do 
+            puts "find org by channel id"
+            parent.send(:where, { "#{parent.name.foreign_key.to_sym}" => id})
           end
         end
+      end
+ 
+      def has_many_finder(attrs={})
+          define_method(attrs[:name]) do |*method_attrs|
+
+            method_attrs = method_attrs[0] || {}
+            klass = self.class.nearby_class(attrs[:class_name])
+
+            if method_attrs.any?
+              klass.get_collection("#{self.class.build_request_path(method_attrs.merge(:id => id))}#{attrs[:path]}")
+            else
+              @data[name] ||= klass.get_collection("#{self.class.build_request_path(:id => id)}#{attrs[:path]}")
+            end
+          end
       end # }}}
 
       # Define an *has_one* relationship.

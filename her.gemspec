@@ -27,6 +27,8 @@ Gem::Specification.new do |s|
   s.add_development_dependency "rb-fsevent", "~> 0.9"
   s.add_development_dependency "growl", "~> 1.0"
   s.add_development_dependency "activerecord"
+  s.add_development_dependency "pry-debugger"
+  
 
   s.add_runtime_dependency "activesupport"
   s.add_runtime_dependency "faraday", "~> 0.8"

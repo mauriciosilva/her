@@ -3,6 +3,7 @@ $:.unshift File.join(File.dirname(__FILE__), *%w[.. lib])
 require "rspec"
 require "mocha_standalone"
 require "active_record"
+require 'pry'
 require "her"
 
 RSpec.configure do |c|
