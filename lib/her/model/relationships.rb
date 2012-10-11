@@ -2,6 +2,7 @@ module Her
   module Model
     # This module adds relationships to models
     module Relationships
+          
       # Return @her_relationships, lazily initialized with copy of the
       # superclass' her_relationships, or an empty hash.
       # @private
@@ -55,6 +56,7 @@ module Her
       #   @user.articles # => [#<Article(articles/2) id=2 title="Hello world.">]
       #   # Fetched via GET "/users/1/articles"
       def has_many(name, attrs={}) # {{{
+
         attrs = {
           :class_name => name.to_s.classify,
           :name => name,
@@ -64,16 +66,34 @@ module Her
         (relationships[:has_many] ||= []) << attrs
         
         if attrs.has_key? :active_record 
-
           active_record_finder attrs
         else
           has_many_finder attrs
         end
 
+        
       end
 
+
+      def find_by_polymorphic_id(parent, child, foreign_key_name)
+        define_method("#{child.name.pluralize.underscore}") do 
+          child.send(:where, {foreign_key_name.to_s.foreign_key.to_sym => id, "#{foreign_key_name}_type".to_sym => parent.name})
+        end
+
+
+        child.class_eval do
+          binding.pry
+          redefine_method(foreign_key_name)  do
+            parent.find(child.send(foreign_key_name.to_s.foreign_key.to_sym))
+          end
+        end
+        
+      end
+
+  
+
       def find_by_parent_id(parent, child)
-        ## find parent by child id
+
         define_method("#{child.name.pluralize.underscore}") do 
           child.send(:where, {"#{parent.name.foreign_key}" => id})
         end
@@ -93,7 +113,12 @@ module Her
         parent = self
         child  = self.nearby_class(attrs[:class_name])
 
-        find_by_parent_id(parent,child)
+        if attrs.has_key? :as 
+          find_by_polymorphic_id(parent, child, attrs[:as]) 
+        else
+          find_by_parent_id(parent,child)
+        end
+        
         find_parent_by_child_id(parent,child)
 
       end
