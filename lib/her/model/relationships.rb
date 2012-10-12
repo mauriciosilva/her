@@ -71,29 +71,22 @@ module Her
           has_many_finder attrs
         end
 
-        
       end
-
 
       def find_by_polymorphic_id(parent, child, foreign_key_name)
         define_method("#{child.name.pluralize.underscore}") do 
           child.send(:where, {foreign_key_name.to_s.foreign_key.to_sym => id, "#{foreign_key_name}_type".to_sym => parent.name})
         end
 
-
         child.class_eval do
-          binding.pry
-          redefine_method(foreign_key_name)  do
-            parent.find(child.send(foreign_key_name.to_s.foreign_key.to_sym))
+          define_method(foreign_key_name)  do
+            child_model = self.send("#{foreign_key_name}_type")
+            child_model.constantize.find(self.send(foreign_key_name.to_s.foreign_key.to_sym))
           end
         end
-        
       end
 
-  
-
       def find_by_parent_id(parent, child)
-
         define_method("#{child.name.pluralize.underscore}") do 
           child.send(:where, {"#{parent.name.foreign_key}" => id})
         end
