@@ -8,11 +8,7 @@ module Her
       # @private
       def relationships # {{{
         @her_relationships ||= begin
-          if superclass.respond_to?(:relationships)
-            superclass.relationships.dup
-          else
-            {}
-          end
+          superclass.respond_to?(:relationships) ? superclass.relationships.dup : {}
         end
       end # }}}
 
@@ -21,14 +17,14 @@ module Her
       def parse_relationships(data) # {{{
         relationships.each_pair do |type, definitions|
           definitions.each do |relationship|
-            name = relationship[:name]
-            klass = self.nearby_class(relationship[:class_name])
-            next if !data.include?(name) or data[name].nil?
+            name  = relationship[:name]
+            klass = self.nearby_class( relationship[:class_name] )
+            next if !data.include?( name ) or data[name].nil?
             data[name] = case type
               when :has_many
-                Her::Model::ORM.initialize_collection(klass, :data => data[name])
+                Her::Model::ORM.initialize_collection( klass, :data => data[name] )
               when :has_one, :belongs_to
-                klass.new(data[name])
+                klass.new( data[name] )
               else
                 nil
             end
@@ -72,28 +68,28 @@ module Her
       end
 
       def find_by_polymorphic_id( parent, child, foreign_key_name )
-        define_method("#{child.name.pluralize.underscore}") do 
-          child.send( :where, {foreign_key_name.to_s.foreign_key.to_sym => id, "#{foreign_key_name}_type".to_sym => parent.name} )
+        define_method( "#{ child.name.pluralize.underscore }" ) do 
+          child.send( :where, { foreign_key_name.to_s.foreign_key.to_sym => id, "#{ foreign_key_name }_type".to_sym => parent.name } )
         end
 
         child.class_eval do
           define_method( foreign_key_name )  do
-            child_model = self.send( "#{foreign_key_name}_type" )
+            child_model = self.send( "#{ foreign_key_name }_type" )
             child_model.constantize.find( self.send( foreign_key_name.to_s.foreign_key.to_sym ) )
           end
         end
       end
 
       def find_by_parent_id( parent, child )
-        define_method("#{child.name.pluralize.underscore}") do 
-          child.send( :where, { "#{parent.name.foreign_key}" => id } )
+        define_method( "#{ child.name.pluralize.underscore }" ) do 
+          child.send( :where, { "#{ parent.name.foreign_key }" => id } )
         end
       end
 
       def find_parent_by_child_id( parent, child )
         ##  find belongs_to by a has_many
         child.class_eval do 
-          define_method( "#{parent.name.singularize.underscore}" ) do 
+          define_method( "#{ parent.name.singularize.underscore }" ) do 
             parent.find( self.send( parent.name.foreign_key.to_sym ) )
           end
         end
@@ -107,11 +103,10 @@ module Her
         if attrs.has_key? :as 
           find_by_polymorphic_id( parent, child, attrs[:as] ) 
         else
-          find_by_parent_id( parent,child )
+          find_by_parent_id( parent, child )
         end
         
-        find_parent_by_child_id(parent,child)
-
+        find_parent_by_child_id( parent, child )
       end
  
       def has_many_finder( attrs={} )
@@ -146,21 +141,22 @@ module Her
       #   @user = User.find(1)
       #   @user.organization # => #<Organization(organizations/2) id=2 name="Foobar Inc.">
       #   # Fetched via GET "/users/1/organization"
-      def has_one(name, attrs={}) # {{{
+      def has_one( name, attrs={} ) # {{{
         attrs = {
           :class_name => name.to_s.classify,
-          :name => name,
-          :path => "/#{name}"
+          :name       => name,
+          :path       => "/#{name}"
         }.merge(attrs)
         (relationships[:has_one] ||= []) << attrs
 
         define_method(name) do |*method_attrs|
           method_attrs = method_attrs[0] || {}
-          klass = self.class.nearby_class(attrs[:class_name])
+          klass = self.class.nearby_class( attrs[:class_name] )
+
           if method_attrs.any?
-            klass.get_resource("#{self.class.build_request_path(method_attrs.merge(:id => id))}#{attrs[:path]}")
+            klass.get_resource( "#{ self.class.build_request_path( method_attrs.merge( :id => id ) ) }#{ attrs[:path] }")
           else
-            @data[name] ||= klass.get_resource("#{self.class.build_request_path(:id => id)}#{attrs[:path]}")
+            @data[name] ||= klass.get_resource( "#{ self.class.build_request_path( :id => id ) }#{ attrs[:path] }")
           end
         end
       end # }}}
@@ -183,33 +179,33 @@ module Her
       #   @user = User.find(1)
       #   @user.team # => #<Team(teams/2) id=2 name="Developers">
       #   # Fetched via GET "/teams/2"
-      def belongs_to(name, attrs={}) # {{{
+      def belongs_to( name, attrs={} ) # {{{
         attrs = {
-          :class_name => name.to_s.classify,
-          :name => name,
+          :class_name  => name.to_s.classify,
+          :name        => name,
           :foreign_key => "#{name}_id",
-          :path => "/#{name.to_s.pluralize}/:id"
+          :path        => "/#{name.to_s.pluralize}/:id"
         }.merge(attrs)
         (relationships[:belongs_to] ||= []) << attrs
 
-        define_method(name) do |*method_attrs|
+        define_method( name ) do |*method_attrs|
           method_attrs = method_attrs[0] || {}
-          klass = self.class.nearby_class(attrs[:class_name])
+          klass = self.class.nearby_class( attrs[:class_name] )
           if method_attrs.any?
-            klass.get_resource("#{klass.build_request_path(method_attrs.merge(:id => @data[attrs[:foreign_key].to_sym]))}")
+            klass.get_resource( "#{ klass.build_request_path( method_attrs.merge( :id => @data[ attrs[:foreign_key].to_sym ] ) ) }" )
           else
-            @data[name] ||= klass.get_resource("#{klass.build_request_path(:id => @data[attrs[:foreign_key].to_sym])}")
+            @data[name] ||= klass.get_resource( "#{ klass.build_request_path( :id => @data[ attrs[:foreign_key].to_sym ] ) }" )
           end
         end
       end # }}}
 
       # @private
-      def relationship_accessor(type, attrs) # {{{
-        name = attrs[:name]
+      def relationship_accessor( type, attrs ) # {{{
+        name       = attrs[:name]
         class_name = attrs[:class_name]
-        define_method(name) do
-          klass = self.class.nearby_class(attrs[:class_name])
-          @data[name] ||= klass.get_resource("#{klass.build_request_path(attrs[:path], :id => @data[attrs[:foreign_key].to_sym])}")
+        define_method( name ) do
+          klass = self.class.nearby_class( attrs[:class_name] )
+          @data[name] ||= klass.get_resource( "#{ klass.build_request_path( attrs[:path], :id => @data[ attrs[:foreign_key].to_sym ] ) }" )
         end
       end # }}}
     end
