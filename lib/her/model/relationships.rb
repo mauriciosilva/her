@@ -172,12 +172,14 @@ module Her
             # Linking tables are generally used for many to many relationships.  In our case we'll
             # be using a linking table to join non-ActiveRecord objects from the API to locally-stored
             # ActiveRecord objects.
+            binding.pry
             
-            linking_table = [klass.to_s.demodulize.pluralize, self.class.to_s.demodulize.pluralize].sort.join.tableize
-            linking_class = self.class.nearby_class( linking_table.classify )
+            linking_table    = [klass.to_s.demodulize.pluralize, self.class.to_s.demodulize.pluralize].sort.join.tableize
+            linking_class    = self.class.nearby_class( linking_table.classify )
 
-            foreign_key_name   = self.class.to_s.demodulize.foreign_key
-            linking_class.where( foreign_key_name.to_sym => self.id )
+            foreign_key_name = self.class.to_s.demodulize.foreign_key
+            linking_instance = linking_class.where( foreign_key_name.to_sym => self.id ).first
+            linking_instance.send( klass.to_s.demodulize.tableize.singularize.to_sym ) unless linking_instance.blank?
           end
         end
       end # }}}
