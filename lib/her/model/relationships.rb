@@ -60,7 +60,7 @@ module Her
 
         (relationships[:has_many] ||= []) << attrs
         
-        if attrs.has_key? :active_record 
+        if attrs.has_key? :active_record
           active_record_finder attrs
         else
           has_many_finder attrs
@@ -153,10 +153,31 @@ module Her
           method_attrs = method_attrs[0] || {}
           klass = self.class.nearby_class( attrs[:class_name] )
 
-          if method_attrs.any?
-            klass.get_resource( "#{ self.class.build_request_path( method_attrs.merge( :id => id ) ) }#{ attrs[:path] }")
+          # if klass doesn't respond to get_resource then we need to do an AR find.
+          if klass.respond_to? :get_resource
+            if method_attrs.any?
+              klass.get_resource( "#{ self.class.build_request_path( method_attrs.merge( :id => id ) ) }#{ attrs[:path] }")
+            else
+              @data[name] ||= klass.get_resource( "#{ self.class.build_request_path( :id => id ) }#{ attrs[:path] }")
+            end
           else
-            @data[name] ||= klass.get_resource( "#{ self.class.build_request_path( :id => id ) }#{ attrs[:path] }")
+            # The linking model should be named following the standard Rails convention of
+            # putting the model names in alphabetical order, making the first one plural,
+            # and then concatenating the names.  The table name should have both models in
+            # alphabetical order and both pluralized.
+            #   ie:
+            # If you have two models: User and Organization then the linking table should be
+            # called organizations_users and the ruby class would be called OrganizationsUser
+            # 
+            # Linking tables are generally used for many to many relationships.  In our case we'll
+            # be using a linking table to join non-ActiveRecord objects from the API to locally-stored
+            # ActiveRecord objects.
+            
+            linking_table = [klass.to_s.demodulize.pluralize, self.class.to_s.demodulize.pluralize].sort.join.tableize
+            linking_class = self.class.nearby_class( linking_table.classify )
+
+            foreign_key_name   = self.class.to_s.demodulize.foreign_key
+            linking_class.where( foreign_key_name.to_sym => self.id )
           end
         end
       end # }}}
