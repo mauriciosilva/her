@@ -233,6 +233,8 @@ module Her
       #   @user = User.find(1)
       #   @user.team # => #<Team(teams/2) id=2 name="Developers">
       #   # Fetched via GET "/teams/2"
+
+
       def belongs_to(name, attrs={}) # {{{
         attrs = {
           :class_name => name.to_s.classify,
