@@ -67,9 +67,22 @@ module Her
         end
       end
 
-      def find_by_polymorphic_id( parent, child, foreign_key_name )
-        define_method( "#{ child.name.pluralize.underscore }" ) do 
-          child.send( :where, { foreign_key_name.to_s.foreign_key.to_sym => id, "#{ foreign_key_name }_type".to_sym => parent.name } )
+      def active_record_finder(attrs={})
+        ## TODO: refactor vars
+        parent = self
+        child  = self.nearby_class(attrs[:class_name])
+
+        if attrs.has_key? :as 
+          find_by_polymorphic_id(parent, child, attrs[:as]) 
+        else
+          find_by_parent_id(parent,child)
+        end
+        find_parent_by_child_id(parent,child)
+      end
+
+      def find_by_polymorphic_id(parent, child, foreign_key_name)
+        define_method("#{child.name.pluralize.underscore}") do 
+          child.send(:where, {foreign_key_name.to_s.foreign_key.to_sym => id, "#{foreign_key_name}_type".to_sym => parent.name})
         end
 
         child.class_eval do
@@ -86,7 +99,13 @@ module Her
         end
       end
 
-      def find_parent_by_child_id( parent, child )
+      def find_single_by_parent_id(parent, child)
+        define_method("#{child.name.underscore}") do 
+          child.send(:where, {"#{parent.name.foreign_key}" => id}).first
+        end
+      end
+
+      def find_parent_by_child_id(parent, child)
         ##  find belongs_to by a has_many
         child.class_eval do 
           define_method( "#{ parent.name.singularize.underscore }" ) do 
@@ -141,7 +160,17 @@ module Her
       #   @user = User.find(1)
       #   @user.organization # => #<Organization(organizations/2) id=2 name="Foobar Inc.">
       #   # Fetched via GET "/users/1/organization"
-      def has_one( name, attrs={} ) # {{{
+      def has_one_finder_ar(attrs={})
+        parent = self
+        child = self.nearby_class(attrs[:class_name])
+
+        find_single_by_parent_id(parent, child)
+
+        find_parent_by_child_id(parent, child)
+
+      end
+
+      def has_one(name, attrs={}) # {{{
         attrs = {
           :class_name => name.to_s.classify,
           :name       => name,
@@ -149,6 +178,14 @@ module Her
         }.merge(attrs)
         (relationships[:has_one] ||= []) << attrs
 
+        if attrs.has_key? :active_record
+          has_one_finder_ar attrs
+        else
+          has_one_finder attrs
+        end
+      end
+
+      def has_one_finder
         define_method(name) do |*method_attrs|
           method_attrs = method_attrs[0] || {}
           klass = self.class.nearby_class( attrs[:class_name] )
@@ -201,7 +238,7 @@ module Her
       #   @user = User.find(1)
       #   @user.team # => #<Team(teams/2) id=2 name="Developers">
       #   # Fetched via GET "/teams/2"
-      def belongs_to( name, attrs={} ) # {{{
+      def belongs_to(name, attrs={}) # {{{
         attrs = {
           :class_name  => name.to_s.classify,
           :name        => name,
