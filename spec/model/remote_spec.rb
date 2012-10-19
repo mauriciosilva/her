@@ -1,39 +1,38 @@
-require "spec_helper.rb"
+require 'spec_helper.rb'
 
 describe Her::Model::Remote do
-  context "setting relationships without details" do
-    before do 
-      spawn_model "Organization"
-      spawn_active_record_model "Channel"
-    end 
-
-    it "handles a single 'has_many' relationship" do 
-      Organization.has_many :workgroups
-      Organization.relationships[:has_many].should == [
-        { :name => :workgroups, :class_name => "Workgroup", :path => "/workgroups" }]
-    end 
-    
-    context "Parent class associations" do 
-      before do 
-        Organization.has_many :channels, :active_record => true
+  before do 
+    spawn_model               'Organization'
+    spawn_active_record_model 'FbAppConfig'
+  end
+  
+  context 'API => AR' do
+    context 'belongs_to' do
+      it 'when declared defines a method to access the parent object' do
+        Organization.belongs_to :fb_app_config
+        Organization.instance_methods.include?( :fb_app_config ).should be_true
       end
 
-      it "handles an active record has_many relationship" do 
-        Organization.relationships[:has_many].should == [ 
-          { :name => :channels, :class_name => "Channel", :path => "/channels", :active_record => true }]
+      it 'without additional attributes the "child" belongs_to "parent" object' do
       end
-      it 'adds some finder methods' do 
-        Organization.instance_methods.include?(:channels).should == true
+    end
+
+    context 'has_one' do
+      it 'when declared defines a method to access the child object' do
+        Organization.has_one :fb_app_config, :active_record => true
+        Organization.instance_methods.include?( :fb_app_config ).should be_true
       end
 
-      it 'sets finders on the child class' do 
-        Channel.instance_methods.include?(:organization).should == true
+      it 'when declared defines a method to access the child object' do
+        Organization.has_one :fb_app_config, :through => :fb_app_configs_organizations, :active_record => true
+        Organization.instance_methods.include?( :fb_app_config ).should be_true
       end
 
-      it 'handles attrs in the association macro' do 
-        Organization.has_many :settings, :as => :owner
+      it 'without additional attributes the "parent" has_one "child" object' do
       end
+    end
 
+    context 'has_many' do
     end
   end
 end

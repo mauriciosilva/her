@@ -185,7 +185,7 @@ module Her
         end
       end
 
-      def has_one_finder
+      def has_one_finder( attrs={} )
         define_method(name) do |*method_attrs|
           method_attrs = method_attrs[0] || {}
           klass = self.class.nearby_class( attrs[:class_name] )
